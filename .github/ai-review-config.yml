@@ -15,5 +15,8 @@ extra_focus_areas:
   - authentication bypass
   - API error handling
 
+# maintainers:
+#   - AnubhavLakra10
+
 maintainers:
-  - AnubhavLakra10
+  - XYZ10
