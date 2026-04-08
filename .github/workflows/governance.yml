@@ -1,0 +1,57 @@
+# Governance — wires up all reusable workflows from ci-platform.
+# See: https://github.com/anubhavdemoplatform/ci-platform
+
+name: Governance
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+  pull_request_review:
+    types: [submitted]
+  schedule:
+    - cron: "0 6 * * 1"
+
+jobs:
+
+  # ── 1. AI Code Review (advisory) ──
+  ai-code-review:
+    if: github.event_name == 'pull_request_target'
+    uses: anubhavdemoplatform/ci-platform/.github/workflows/reusable-ai-code-review.yml@main
+    secrets:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+  # ── 2. AI Security Scan — PR mode (advisory) ──
+  ai-security-scan:
+    if: github.event_name == 'pull_request_target'
+    uses: anubhavdemoplatform/ci-platform/.github/workflows/reusable-ai-security-scan.yml@main
+    with:
+      scan-mode: pr
+    secrets:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+  # ── 3. PR Size Label (advisory) ──
+  pr-size-label:
+    if: github.event_name == 'pull_request_target'
+    uses: anubhavdemoplatform/ci-platform/.github/workflows/reusable-pr-size-label.yml@main
+
+  # ── 4. Maintainer Gate (hard blocker) ──
+  maintainer-gate:
+    if: github.event_name == 'pull_request_target' || github.event_name == 'pull_request_review'
+    uses: anubhavdemoplatform/ci-platform/.github/workflows/reusable-maintainer-gate.yml@main
+
+  # ── 5. CI Complete Gate (hard blocker — aggregates all above) ──
+  ci-complete:
+    needs: [ai-code-review, ai-security-scan, pr-size-label, maintainer-gate]
+    if: always()
+    uses: anubhavdemoplatform/ci-platform/.github/workflows/reusable-ci-complete-gate.yml@main
+    with:
+      needs-context: ${{ toJSON(needs) }}
+
+  # ── Weekly full-repo security scan ──
+  weekly-security-scan:
+    if: github.event_name == 'schedule'
+    uses: anubhavdemoplatform/ci-platform/.github/workflows/reusable-ai-security-scan.yml@main
+    with:
+      scan-mode: full-repo
+    secrets:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}

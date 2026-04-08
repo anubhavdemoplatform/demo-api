@@ -1,0 +1,19 @@
+# AI review configuration for demo-api
+# Consumed by ci-platform reusable workflows.
+
+severity_threshold: medium
+
+skip_dirs:
+  - __pycache__
+  - .venv
+  - venv
+  - .git
+
+extra_focus_areas:
+  - SQL injection
+  - input validation
+  - authentication bypass
+  - API error handling
+
+maintainers:
+  - AnubhavLakra10
